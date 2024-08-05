@@ -1,0 +1,10 @@
+*.json
+*.yml
+*.yaml
+*.conf
+*db
+.env
+bot.py
+__pycache__/
+*.pyc
+api.py

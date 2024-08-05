@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cryptocurrency Price Tracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            padding: 20px;
+        }
+        .card h2 {
+            margin-top: 0;
+            color: #444;
+        }
+        .price {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0066cc;
+        }
+        .timestamp {
+            font-size: 12px;
+            color: #666;
+        }
+        #chartContainer {
+            display: none;
+        }
+        .chart {
+            margin-top: 20px;
+        }
+        button {
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0052a3;
+        }
+        .status {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .status.live {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .status.error {
+            background-color: #f44336;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cryptocurrency Price Tracker</h1>
+        <div id="statusIndicator" class="status"></div>
+        <div id="currentPrices"></div>
+        <button id="toggleCharts">Show Charts</button>
+        <div id="chartContainer"></div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
