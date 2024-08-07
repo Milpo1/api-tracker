@@ -229,12 +229,3 @@ Content-Type: application/json
 The `price_extract_func` should be a Python lambda function that takes the WebSocket message as input and returns a dictionary with 'timestamp' and 'price' keys.
 
 Note: The custom exchange feature requires careful implementation  to ensure proper handling of different WebSocket protocols and <u>message formats</u>.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a pull request.
-
-## License
-
-This project is open source and available under the [MIT License](LICENSE).
-
