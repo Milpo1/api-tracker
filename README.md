@@ -1,5 +1,5 @@
 
-# API-Tracker: Faster than  TradingView
+# API-Tracker: Faster than TradingView ;)
 
 This application is a real-time price tracker that fetches and displays price data from multiple exchanges. It includes a backend server built with Flask and a frontend web interface.
  
