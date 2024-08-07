@@ -32,13 +32,6 @@ if None in (TELEGRAM_TOKEN, TELEGRAM_CHATID):
     TELEGRAM_BOT_DISABLED = True
     
 api_base_url = os.getenv('API_BASE_URL',' http://localhost/api')
-config = {
-    "apiBaseUrl": api_base_url
-}
-with open('config.json', 'w') as config_file:
-    json.dump(config, config_file, indent=4)
-print("config.json has been created with the following content:")
-print(json.dumps(config, indent=4))
     
 # Flask app setup
 app = Flask(__name__)
@@ -54,7 +47,7 @@ def clean(input_data, chars_to_replace=',.!:-'):
     if isinstance(input_data, str):
         # Replace characters in the string
         for char in chars_to_replace:
-            input_data = input_data.replace(char, '_').lower()
+            input_data = input_data.replace(char, replace_with).lower()
         return input_data
     elif isinstance(input_data, dict):
         # Create a new dictionary with modified keys
@@ -63,7 +56,7 @@ def clean(input_data, chars_to_replace=',.!:-'):
             new_key = key
             if isinstance(key, str):
                 for char in chars_to_replace:
-                    new_key = new_key.replace(char, '_').lower()
+                    new_key = new_key.replace(char, replace_with).lower()
             new_dict[new_key] = value
         return new_dict
     else:
@@ -111,23 +104,39 @@ class ExchangeWebSocket(ABC):
                         try:
                             message = await asyncio.wait_for(websocket.recv(), timeout=30)
                             await self.on_message(message)
+                            
+                            # Send ping every 20 seconds
+                            current_time = time.time()
+                            if current_time - self.last_ping_time > 20:
+                                await self.ping()
+                                self.last_ping_time = current_time
+                                
                         except asyncio.TimeoutError:
                             await self.ping()
+            except websockets.exceptions.ConnectionClosed as e:
+                self.logger.error(f"WebSocket connection closed: {e}")
+                self.logger.info("Attempting to reconnect in 5 seconds...")
+                await asyncio.sleep(5)
             except Exception as e:
                 self.logger.error(f"WebSocket error: {e}")
                 self.logger.info("Attempting to reconnect in 5 seconds...")
                 await asyncio.sleep(5)
 
     async def ping(self):
-        current_time = time.time()
-        if current_time - self.last_ping_time >= 30:
-            try:
-                await self.websocket.ping()
-                self.last_ping_time = current_time
-                self.logger.debug(f"Sent ping to {self.exchange_name} WebSocket")
-            except Exception as e:
-                self.logger.error(f"Error sending ping to {self.exchange_name} WebSocket: {e}")
+        try:
+            ping_message = self.get_ping_message()
+            await self.websocket.send(json.dumps(ping_message))
+            self.logger.info(f"Sent ping to {self.exchange_name} WebSocket")
+        except Exception as e:
+            self.logger.error(f"Error sending ping to {self.exchange_name} WebSocket: {e}")
 
+    def get_ping_message(self):
+        # Default ping message, can be overridden in subclasses if needed
+        return {
+            "id": int(time.time() * 1000),
+            "type": "ping"
+        }
+        
     def add_symbol(self, symbol: str):
         self.subscribed_symbols.add(symbol)
 
@@ -179,12 +188,18 @@ class GateioWebSocket(ExchangeWebSocket):
 
     async def on_message(self, message: str):
         data = json.loads(message)
-        if 'result' in data and 'last' in data['result'] and 'currency_pair' in data['result']:
+        if 'result' in data and type(data['result']) is dict and 'last' in data['result'] and 'currency_pair' in data['result']:
             symbol = data['result']['currency_pair']
             self.price_updates[symbol] = {
                 'timestamp': int(time.time()),
                 'price': float(data['result']['last'])
             }
+    
+    def get_ping_message(self):
+        return {
+            "time": int(time.time() * 1000),
+            "channel": "spot.ping"
+        }
             
 class MexcWebSocket(ExchangeWebSocket):
     def __init__(self):
@@ -205,6 +220,12 @@ class MexcWebSocket(ExchangeWebSocket):
                 'timestamp': int(time.time()),
                 'price': float(data['d']['p'])
             }
+            
+    def get_ping_message(self):
+        return {
+            # "time": int(time.time() * 1000),
+            "method": "PING"
+        }
 
 class CalculatedTicker:
     def __init__(self, name: str, formula: str):
@@ -668,10 +689,10 @@ async def main():
 
     # Add calc tikcers alerts
     ticker_manager.add_calculated_ticker("BTC_RATIO", "mexc_BTCUSDT / kucoin_BTC-USDT")
-    ticker_manager.add_alert("Calculated_BTC_RATIO", "price >= 1", "🚀 {ticker}  is above 1.01. Current: ${price:.4f}", 10)
-    ticker_manager.add_alert("Calculated_BTC_RATIO", "price <= 1", "🚀 {ticker}  is below 0.99. Current: ${price:.4f}", 10, 3)
+    # ticker_manager.add_alert("Calculated_BTC_RATIO", "price >= 1", "🚀 {ticker}  is above 1.01. Current: ${price:.4f}", 10)
+    # ticker_manager.add_alert("Calculated_BTC_RATIO", "price <= 1", "🚀 {ticker}  is below 0.99. Current: ${price:.4f}", 10, 3)
 
-    ticker_manager.disable_alert("Calculated_BTC_RATIO", "price >= 1")
+    # ticker_manager.disable_alert("Calculated_BTC_RATIO", "price >= 1")
 
     # Start background tasks
     background_task = asyncio.create_task(start_background_tasks())
